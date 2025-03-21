@@ -39,22 +39,25 @@ function martingala(){
     echo -ne "\n${yellowColour}[+]${endColour}${grayColour} ¿Cuánto dinero deseas apostar? -> ${endColour}${yellowColour}" && read initial_bet
     echo -ne "\n${endColour}${yellowColour}[+]${endColour}${grayColour} ¿A qué deseas apostar continuamente (${yellowColour}par${endColour}${grayColour}/${endColour}${yellowColour}impar${endColour}${grayColour})? -> ${endColour}${yellowColour}" && read par_impar
     
-    echo -e "\n${endColour}${yellowColour}[+]${endColour}${grayColour} Vamos a jugar una cantidad inicial de${endColour}${yellowColour} $initial_bet €${endColour}${grayColour} a${endColour}${yellowColour} $par_impar${endColour}"
+    echo -e "\n${endColour}${yellowColour}[+]${endColour}${grayColour} Vamos a jugar una cantidad inicial de${endColour}${yellowColour} $initial_bet€${endColour}${grayColour} a${endColour}${yellowColour} $par_impar${endColour}\n"
     
+
     while true; do
         random_number="$(($RANDOM % 7))"
-        echo -e "\nHa salido el numero $random_number"
+        money=$((money - initial_bet))
+        echo -e "${endColour}${yellowColour}[+]${endColour}${grayColour} Acabas de apostar${endColour}${yellowColour} $initial_bet€${endColour}${grayColour} y tienes ${endColour}${yellowColour} $money€ ${endColour}"
+        sleep 1
+        echo -e "${yellowColour}[+]${endColour} Ha salido el numero $random_number"
         sleep 1
         if { { [[ "$par_impar" == "par" ]] && (( random_number % 2 == 0 )) && (( random_number != 0 )) ;} || { [[ "$par_impar" == "impar" ]] && (( random_number % 2 == 1 ));} }; then
             actual_bet=$((initial_bet * 2))
             
-            money=$((money + initial_bet))
-            echo -e "\n${greenColour}[+] Has ganado ${yellowColour}$actual_bet${endColour},${greenColour} ahora tienes${endColour} ${yellowColour}$money${endColour}"
+            money=$((money + initial_bet * 2))
+            echo -e "${greenColour}[+] Has ganado ${yellowColour}$actual_bet${endColour},${greenColour} ahora tienes${endColour} ${yellowColour}$money${endColour}\n"
         else
-            money=$((money - initial_bet))
-            echo -e "\n${redColour}[-] Has perdido ${yellowColour}$initial_bet${endColour}${redColour}, ahora tienes${endColour} ${yellowColour}$money${endColour}"
+            echo -e "${redColour}[-] Has perdido ${yellowColour}$initial_bet${endColour}${redColour}, ahora tienes${endColour} ${yellowColour}$money${endColour}\n"
         fi
-        sleep 1
+        sleep 3
     done
 }
 
