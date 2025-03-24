@@ -36,30 +36,46 @@ function helpPanel(){
 ##########################################
 function martingala(){
     echo -e "\n${yellowColour}[+]${endColour}${grayColour} Dinero actual:${endColour}${yellowColour} $money€${endColour}"
-    echo -ne "\n${yellowColour}[+]${endColour}${grayColour} ¿Cuánto dinero deseas apostar? -> ${endColour}${yellowColour}" && read initial_bet
-    echo -ne "\n${endColour}${yellowColour}[+]${endColour}${grayColour} ¿A qué deseas apostar continuamente (${yellowColour}par${endColour}${grayColour}/${endColour}${yellowColour}impar${endColour}${grayColour})? -> ${endColour}${yellowColour}" && read par_impar
+    echo -ne "\n${yellowColour}[+]${endColour}${grayColour} ¿Cuánto dinero deseas apostar? -> ${endColour}${yellowColour}"
+    read initial_bet
+    echo -ne "\n${endColour}${yellowColour}[+]${endColour}${grayColour} ¿A qué deseas apostar continuamente (${yellowColour}par${endColour}${grayColour}/${endColour}${yellowColour}impar${endColour}${grayColour})? -> ${endColour}${yellowColour}"
+    read par_impar
     
-    echo -e "\n${endColour}${yellowColour}[+]${endColour}${grayColour} Vamos a jugar una cantidad inicial de${endColour}${yellowColour} $initial_bet€${endColour}${grayColour} a${endColour}${yellowColour} $par_impar${endColour}\n"
-    
+    echo -e "\n${endColour}${yellowColour}[+]${endColour}${grayColour} Vamos a jugar con un capital inicial de ${endColour}${yellowColour}$money€${endColour} apostando a ${endColour}${yellowColour}$par_impar${endColour}\n"
+    play_counter="$1"
 
+    backup_bet=$initial_bet
     while true; do
-        random_number="$(($RANDOM % 7))"
-        money=$((money - initial_bet))
-        echo -e "${endColour}${yellowColour}[+]${endColour}${grayColour} Acabas de apostar${endColour}${yellowColour} $initial_bet€${endColour}${grayColour} y tienes ${endColour}${yellowColour} $money€ ${endColour}"
-        sleep 1
-        echo -e "${yellowColour}[+]${endColour} Ha salido el numero $random_number"
-        sleep 1
-        if { { [[ "$par_impar" == "par" ]] && (( random_number % 2 == 0 )) && (( random_number != 0 )) ;} || { [[ "$par_impar" == "impar" ]] && (( random_number % 2 == 1 ));} }; then
-            actual_bet=$((initial_bet * 2))
-            
-            money=$((money + initial_bet * 2))
-            echo -e "${greenColour}[+] Has ganado ${yellowColour}$actual_bet${endColour},${greenColour} ahora tienes${endColour} ${yellowColour}$money${endColour}\n"
-        else
-            echo -e "${redColour}[-] Has perdido ${yellowColour}$initial_bet${endColour}${redColour}, ahora tienes${endColour} ${yellowColour}$money${endColour}\n"
+        if [ "$money" -lt "$initial_bet" ]; then
+
+            if [ "$money" -eq 0 ]; then
+                echo -e "\n${redColour}[!] Te has quedado sin dinero. Saldo actual: ${endColour}${yellowColour}$money€${endColour}"
+            else
+                echo -e "\n${redColour}[!] No tienes suficiente dinero para apostar ${yellowColour}$initial_bet€${endColour}${redColour}. Te quedan ${yellowColour}$money€${endColour}"
+            fi
+            echo -e "\n${yellowColour}[+]${endColour}${grayColour} Han habido un total de :${endColour}${yellowColour} $play_counter jugadas${endColour}"
+            exit 0
         fi
-        sleep 3
+        
+        random_number=$((RANDOM % 37))
+        money=$((money - initial_bet))
+        echo -e "${endColour}${yellowColour}[+]${endColour}${grayColour} Acabas de apostar ${endColour}${yellowColour}$initial_bet€${endColour}${grayColour} y te quedan ${endColour}${yellowColour}$money€${endColour}"
+        echo -e "${yellowColour}[+]${endColour} Ha salido el número $random_number"
+        
+        
+        if [[ ( "$par_impar" == "par" && $random_number -ne 0 && $((random_number % 2)) -eq 0 ) || ( "$par_impar" == "impar" && $((random_number % 2)) -eq 1 ) ]]; then
+            reward=$((initial_bet * 2))
+            money=$((money + reward))
+            echo -e "${greenColour}[+] Has ganado ${yellowColour}$reward€${endColour}, ${greenColour}ahora tienes${endColour} ${yellowColour}$money€${endColour}\n"
+            initial_bet=$backup_bet
+        else
+            echo -e "${redColour}[-] Has perdido ${yellowColour}$initial_bet€${endColour}${redColour}, ahora tienes${endColour} ${yellowColour}$money€${endColour}\n"
+            initial_bet=$((initial_bet * 2))
+        fi
+        ((play_counter+=1))
     done
 }
+
 
 
 while getopts "m:t:h" flag; do
