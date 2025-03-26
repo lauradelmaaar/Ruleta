@@ -38,9 +38,17 @@ function martingala(){
     echo -e "\n${yellowColour}[+]${endColour}${grayColour} Dinero actual:${endColour}${yellowColour} $money€${endColour}"
     echo -ne "\n${yellowColour}[+]${endColour}${grayColour} ¿Cuánto dinero deseas apostar? -> ${endColour}${yellowColour}"
     read initial_bet
+    if ! [[ "$initial_bet" =~ ^[0-9]+$ ]]; then
+        echo -e "\n${redColour}[ERROR] La cantidad apostada debe ser un número entero positivo.${endColour}"
+        exit 1
+    fi
     echo -ne "\n${endColour}${yellowColour}[+]${endColour}${grayColour} ¿A qué deseas apostar continuamente (${yellowColour}par${endColour}${grayColour}/${endColour}${yellowColour}impar${endColour}${grayColour})? -> ${endColour}${yellowColour}"
     read par_impar
-    
+    if [[ "$par_impar" != "par" && "$par_impar" != "impar" ]]; then
+        echo -e "\n${redColour}[ERROR] Opción inválida. Debes escribir 'par' o 'impar'.${endColour}"
+        exit 1
+    fi
+
     play_counter="$1"
     jugadas_malas=""
     initial_capital="$money"
@@ -71,6 +79,101 @@ function martingala(){
     done
 }
 
+##########################################
+#          Inverse Labrouchere           #
+##########################################
+function inverseLabrouchere(){
+    echo -e "Estoy utilizando la funcion Inverse Labrouchere"
+    echo -e "\n${yellowColour}[+]${endColour}${grayColour} Dinero actual:${endColour}${yellowColour} $money€${endColour}"
+    #echo -ne "\n${yellowColour}[+]${endColour}${grayColour} ¿Cuánto dinero deseas apostar? -> ${endColour}${yellowColour}"
+    #read initial_bet
+    #if ! [[ "$initial_bet" =~ ^[0-9]+$ ]]; then
+    #    echo -e "\n${redColour}[ERROR] La cantidad apostada debe ser un número entero positivo.${endColour}"
+    #    exit 1
+    #fi
+    echo -ne "\n${endColour}${yellowColour}[+]${endColour}${grayColour} ¿A qué deseas apostar continuamente (${yellowColour}par${endColour}${grayColour}/${endColour}${yellowColour}impar${endColour}${grayColour})? -> ${endColour}${yellowColour}"
+    read par_impar
+    if [[ "$par_impar" != "par" && "$par_impar" != "impar" ]]; then
+        echo -e "\n${redColour}[ERROR] Opción inválida. Debes escribir 'par' o 'impar'.${endColour}"
+        exit 1
+    fi
+
+    declare -a lab=( 1 2 3 4 )
+    first_number=${lab[0]}
+    last_number=${lab[-1]}
+    initial_bet=$(( first_number + last_number))
+    total_elements=${#lab[@]}
+
+    initial_capital="$money"
+    while true; do
+
+        if [ "$money" -lt "$initial_bet" ]; then
+            echo -e "\n${redColour}[!] No tienes suficiente dinero para apostar ${yellowColour}$initial_bet€${endColour}${redColour}. Tu capital inicial era${endColour}${yellowColour} $initial_capital€${endColour}${redColour} te quedan ${endColour}${yellowColour}$money€${endColour}. "
+            exit 0
+        fi
+
+        total_elements=${#lab[@]}
+        if [ "$total_elements" -eq 0 ]; then
+            echo -e "\n${redColour}[!] La partida ha acabado. No quedan elementos en la lista.${endColour}"
+            exit 0
+        fi
+
+        random_number=$((RANDOM % 37))
+        money=$((money - initial_bet))
+        echo -e "\n ${orangeColour}$random_number${endColour}"
+        all_elements="${lab[@]}"
+    
+        # aciertas
+        if [[ ( "$par_impar" == "par" && $random_number -ne 0 && $((random_number % 2)) -eq 0 ) || ( "$par_impar" == "impar" && $((random_number % 2)) -eq 1 ) ]]; then
+                echo -e "${greenColour}[+]${endColour}${grayColour}GANAS!${endColour}"
+                echo -e "${yellowColour}[+]${endColour}${grayColour}Tu lista era: ${endColour}${blueColour}$all_elements${endColour}"
+                addLast=$(( ${lab[0]} + ${lab[-1]} ))
+                lab+=($addLast)
+                echo -e "${yellowColour}[+]${endColour}${grayColour}El ultimo elemento ahora es ${endColour}${yellowColour}$addLast${endColour}"
+                echo -e "${yellowColour}[+]${endColour}${grayColour}Tu lista queda así:${endColour}${blueColour} ${lab[@]}${endColour}\n"
+                reward=$((initial_bet + $addLast))
+                money=$((money + reward))
+                first_number=${lab[0]}
+                last_number=${lab[-1]}
+                initial_bet=$(( first_number + last_number))
+                echo -e "\n${yellowColour}[+]${endColour}${grayColour} Apuestas: ${endColour}${yellowColour}$initial_bet${endColour}"
+                #sleep 3
+
+        # pierdes
+        else
+            echo -e "${redColour}[-]${endColour}${grayColour}PIERDES!${endColour}"
+            echo -e "${yellowColour}[+]${endColour}${grayColour}Tu lista era: ${endColour}${blueColour}$all_elements${endColour}"
+            first_number=${lab[0]}
+            last_number=${lab[-1]}
+            if [ "${#lab[@]}" -eq 1 ]; then
+                unset lab[0]
+            else
+                unset lab[0]
+                unset lab[-1]
+            fi
+
+            lab=(${lab[@]})
+            
+            total_elements=${#lab[@]}
+            if [ "$total_elements" -eq 0 ]; then
+                echo -e "\n${redColour}[!] La partida ha acabado. No quedan elementos en la lista.${endColour}"
+                exit 0
+            fi
+            echo -e "${yellowColour}[+]${endColour}${grayColour}El primer elemento ahora es: ${endColour}${yellowColour} ${lab[0]}${endColour}"
+            echo -e "${yellowColour}[+]${endColour}${grayColour}El ultimo elemento ahora es: ${endColour}${yellowColour} ${lab[-1]}${endColour}"
+            echo -e "${yellowColour}[+]${endColour}${grayColour}Tu lista queda así: ${endColour}${blueColour} ${lab[@]}${endColour}\n"
+            first_number=${lab[0]}
+            last_number=${lab[-1]}
+            initial_bet=$(( first_number + last_number ))
+            echo -e "\n apuestas: $initial_bet"
+            #sleep 3
+        fi
+    
+    done
+
+}
+
+
 
 
 while getopts "m:t:h" flag; do
@@ -84,6 +187,9 @@ done
 if [ $money ] && [ $technique ] ; then
     if [ "$technique" == "martingala" ]; then
         martingala
+
+    elif [ "$technique" == "inverse" ]; then
+        inverseLabrouchere
     else
         echo -e "\n${redColour}[!] La tecnica no existe${endColour}"
         helpPanel
